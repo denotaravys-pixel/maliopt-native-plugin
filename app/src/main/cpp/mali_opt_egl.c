@@ -15,16 +15,16 @@ static int check_egl_extension(const char* ext_name) {
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_hybridcore_maliopt_MaliOptNative_isFenceSyncSupported(JNIEnv *env, jobject thiz) {
+Java_com_maliopt_MaliOptNative_isFenceSyncSupported(JNIEnv *env, jobject thiz) {
     return (jboolean)check_egl_extension("EGL_KHR_fence_sync");
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_hybridcore_maliopt_MaliOptNative_isNativeFenceSyncSupported(JNIEnv *env, jobject thiz) {
+Java_com_maliopt_MaliOptNative_isNativeFenceSyncSupported(JNIEnv *env, jobject thiz) {
     return (jboolean)check_egl_extension("EGL_ANDROID_native_fence_sync");
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_hybridcore_maliopt_MaliOptNative_isWaitSyncSupported(JNIEnv *env, jobject thiz) {
+Java_com_maliopt_MaliOptNative_isWaitSyncSupported(JNIEnv *env, jobject thiz) {
     return (jboolean)check_egl_extension("EGL_KHR_wait_sync");
 }
