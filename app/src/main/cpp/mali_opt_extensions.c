@@ -85,8 +85,48 @@ static void detect_context(void) {
     strcpy(g_context, "NATIVE");
 }
 
+// Força as capacidades conhecidas do Mali-G52 (Bifrost) quando o driver as omite
+static void apply_bifrost_hardware_knowledge(void) {
+    if (strstr(g_caps.GPU_RENDERER, "Mali-G52") == NULL) return;
+
+    LOGI("Mali-G52 detectado. Aplicando conhecimento de hardware Bifrost.");
+
+    if (!g_caps.FB_FETCH) {
+        g_caps.FB_FETCH = true;
+        LOGI("  [FORCE] FB_FETCH = true");
+    }
+    if (!g_caps.FB_FETCH_DEPTH_STENCIL) {
+        g_caps.FB_FETCH_DEPTH_STENCIL = true;
+        LOGI("  [FORCE] FB_FETCH_DEPTH_STENCIL = true");
+    }
+    if (!g_caps.PLS) {
+        g_caps.PLS = true;
+        LOGI("  [FORCE] PLS = true");
+    }
+    if (!g_caps.MALI_BINARY) {
+        g_caps.MALI_BINARY = true;
+        LOGI("  [FORCE] MALI_BINARY = true");
+    }
+    if (!g_caps.PROGRAM_BINARY) {
+        g_caps.PROGRAM_BINARY = true;
+        LOGI("  [FORCE] PROGRAM_BINARY = true");
+    }
+    if (!g_caps.TEXTURE_STORAGE) {
+        g_caps.TEXTURE_STORAGE = true;
+        LOGI("  [FORCE] TEXTURE_STORAGE = true");
+    }
+    if (!g_caps.BUFFER_STORAGE) {
+        g_caps.BUFFER_STORAGE = true;
+        LOGI("  [FORCE] BUFFER_STORAGE = true");
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// TODAS AS FUNÇÕES JNI COM PREFIXO CORRETO: Java_com_maliopt_MaliOptNative_
+// ═══════════════════════════════════════════════════════════════════════════
+
 JNIEXPORT void JNICALL
-Java_com_hybridcore_maliopt_MaliOptNative_detectExtensions(JNIEnv *env, jobject thiz) {
+Java_com_maliopt_MaliOptNative_detectExtensions(JNIEnv *env, jobject thiz) {
     if (g_initialized) return;
 
     LOGI("========== MaliOpt Plugin: Iniciando deteccao ==========");
@@ -114,6 +154,7 @@ Java_com_hybridcore_maliopt_MaliOptNative_detectExtensions(JNIEnv *env, jobject 
     LOGI("GPU: %s | Vendor: %s | GLES: %s",
          g_caps.GPU_RENDERER, g_caps.GPU_VENDOR, g_caps.GLES_VERSION);
 
+    // ═══ LEITURA DAS EXTENSÕES REPORTADAS ════════════════════════════════
     g_caps.FB_FETCH               = check_extension("GL_ARM_shader_framebuffer_fetch");
     g_caps.FB_FETCH_DEPTH_STENCIL = check_extension("GL_ARM_shader_framebuffer_fetch_depth_stencil");
     g_caps.PLS                    = check_extension("GL_EXT_shader_pixel_local_storage");
@@ -141,6 +182,10 @@ Java_com_hybridcore_maliopt_MaliOptNative_detectExtensions(JNIEnv *env, jobject 
     g_caps.KHR_DEBUG          = check_extension("GL_KHR_debug");
     g_caps.ROBUSTNESS         = check_extension("GL_EXT_robustness");
 
+    // ═══ FORÇA CONHECIMENTO DE HARDWARE (BIFROST) SE NECESSÁRIO ════════════
+    apply_bifrost_hardware_knowledge();
+
+    // ═══ LIMITES ═════════════════════════════════════════════════════════
     glGetIntegerv(GL_MAX_TEXTURE_SIZE,                &g_caps.MAX_TEXTURE_SIZE);
     glGetIntegerv(GL_MAX_SAMPLES,                      &g_caps.MAX_SAMPLES);
     glGetIntegerv(GL_MAX_VERTEX_ATTRIBS,               &g_caps.MAX_VERTEX_ATTRIBS);
@@ -163,7 +208,7 @@ Java_com_hybridcore_maliopt_MaliOptNative_detectExtensions(JNIEnv *env, jobject 
 }
 
 JNIEXPORT jstring JNICALL
-Java_com_hybridcore_maliopt_MaliOptNative_getExtensionReport(JNIEnv *env, jobject thiz) {
+Java_com_maliopt_MaliOptNative_getExtensionReport(JNIEnv *env, jobject thiz) {
     if (!g_initialized)
         return (*env)->NewStringUTF(env, "NOT_INITIALIZED");
 
@@ -193,119 +238,119 @@ Java_com_hybridcore_maliopt_MaliOptNative_getExtensionReport(JNIEnv *env, jobjec
 }
 
 JNIEXPORT jstring JNICALL
-Java_com_hybridcore_maliopt_MaliOptNative_getRawGLExtensions(JNIEnv *env, jobject thiz) {
+Java_com_maliopt_MaliOptNative_getRawGLExtensions(JNIEnv *env, jobject thiz) {
     return (*env)->NewStringUTF(env, g_raw_gl_ext);
 }
 
 JNIEXPORT jstring JNICALL
-Java_com_hybridcore_maliopt_MaliOptNative_getRawEGLExtensions(JNIEnv *env, jobject thiz) {
+Java_com_maliopt_MaliOptNative_getRawEGLExtensions(JNIEnv *env, jobject thiz) {
     return (*env)->NewStringUTF(env, g_raw_egl_ext);
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_hybridcore_maliopt_MaliOptNative_isFramebufferFetchSupported(JNIEnv *env, jobject thiz) {
+Java_com_maliopt_MaliOptNative_isFramebufferFetchSupported(JNIEnv *env, jobject thiz) {
     return (jboolean)g_caps.FB_FETCH; }
 JNIEXPORT jboolean JNICALL
-Java_com_hybridcore_maliopt_MaliOptNative_isFramebufferFetchDepthStencilSupported(JNIEnv *env, jobject thiz) {
+Java_com_maliopt_MaliOptNative_isFramebufferFetchDepthStencilSupported(JNIEnv *env, jobject thiz) {
     return (jboolean)g_caps.FB_FETCH_DEPTH_STENCIL; }
 JNIEXPORT jboolean JNICALL
-Java_com_hybridcore_maliopt_MaliOptNative_isPLSSupported(JNIEnv *env, jobject thiz) {
+Java_com_maliopt_MaliOptNative_isPLSSupported(JNIEnv *env, jobject thiz) {
     return (jboolean)g_caps.PLS; }
 JNIEXPORT jboolean JNICALL
-Java_com_hybridcore_maliopt_MaliOptNative_isMaliBinarySupported(JNIEnv *env, jobject thiz) {
+Java_com_maliopt_MaliOptNative_isMaliBinarySupported(JNIEnv *env, jobject thiz) {
     return (jboolean)g_caps.MALI_BINARY; }
 JNIEXPORT jboolean JNICALL
-Java_com_hybridcore_maliopt_MaliOptNative_isASTCLDRSupported(JNIEnv *env, jobject thiz) {
+Java_com_maliopt_MaliOptNative_isASTCLDRSupported(JNIEnv *env, jobject thiz) {
     return (jboolean)g_caps.ASTC_LDR; }
 JNIEXPORT jboolean JNICALL
-Java_com_hybridcore_maliopt_MaliOptNative_isASTCHDRSupported(JNIEnv *env, jobject thiz) {
+Java_com_maliopt_MaliOptNative_isASTCHDRSupported(JNIEnv *env, jobject thiz) {
     return (jboolean)g_caps.ASTC_HDR; }
 JNIEXPORT jboolean JNICALL
-Java_com_hybridcore_maliopt_MaliOptNative_isETC2Supported(JNIEnv *env, jobject thiz) {
+Java_com_maliopt_MaliOptNative_isETC2Supported(JNIEnv *env, jobject thiz) {
     return (jboolean)g_caps.ETC2; }
 JNIEXPORT jboolean JNICALL
-Java_com_hybridcore_maliopt_MaliOptNative_isStandardDerivativesSupported(JNIEnv *env, jobject thiz) {
+Java_com_maliopt_MaliOptNative_isStandardDerivativesSupported(JNIEnv *env, jobject thiz) {
     return (jboolean)g_caps.STANDARD_DERIVATIVES; }
 JNIEXPORT jboolean JNICALL
-Java_com_hybridcore_maliopt_MaliOptNative_isTextureFloatSupported(JNIEnv *env, jobject thiz) {
+Java_com_maliopt_MaliOptNative_isTextureFloatSupported(JNIEnv *env, jobject thiz) {
     return (jboolean)g_caps.TEXTURE_FLOAT; }
 JNIEXPORT jboolean JNICALL
-Java_com_hybridcore_maliopt_MaliOptNative_isTextureFloatLinearSupported(JNIEnv *env, jobject thiz) {
+Java_com_maliopt_MaliOptNative_isTextureFloatLinearSupported(JNIEnv *env, jobject thiz) {
     return (jboolean)g_caps.TEXTURE_FLOAT_LINEAR; }
 JNIEXPORT jboolean JNICALL
-Java_com_hybridcore_maliopt_MaliOptNative_isTextureHalfFloatSupported(JNIEnv *env, jobject thiz) {
+Java_com_maliopt_MaliOptNative_isTextureHalfFloatSupported(JNIEnv *env, jobject thiz) {
     return (jboolean)g_caps.TEXTURE_HALF_FLOAT; }
 JNIEXPORT jboolean JNICALL
-Java_com_hybridcore_maliopt_MaliOptNative_isTextureHalfFloatLinearSupported(JNIEnv *env, jobject thiz) {
+Java_com_maliopt_MaliOptNative_isTextureHalfFloatLinearSupported(JNIEnv *env, jobject thiz) {
     return (jboolean)g_caps.TEXTURE_HALF_FLOAT_LINEAR; }
 JNIEXPORT jboolean JNICALL
-Java_com_hybridcore_maliopt_MaliOptNative_isMultisampledRTSupported(JNIEnv *env, jobject thiz) {
+Java_com_maliopt_MaliOptNative_isMultisampledRTSupported(JNIEnv *env, jobject thiz) {
     return (jboolean)g_caps.MULTISAMPLED_RT; }
 JNIEXPORT jboolean JNICALL
-Java_com_hybridcore_maliopt_MaliOptNative_isMultisampledRT2Supported(JNIEnv *env, jobject thiz) {
+Java_com_maliopt_MaliOptNative_isMultisampledRT2Supported(JNIEnv *env, jobject thiz) {
     return (jboolean)g_caps.MULTISAMPLED_RT2; }
 JNIEXPORT jboolean JNICALL
-Java_com_hybridcore_maliopt_MaliOptNative_isSRGBSupported(JNIEnv *env, jobject thiz) {
+Java_com_maliopt_MaliOptNative_isSRGBSupported(JNIEnv *env, jobject thiz) {
     return (jboolean)g_caps.SRGB; }
 JNIEXPORT jboolean JNICALL
-Java_com_hybridcore_maliopt_MaliOptNative_isSRGBWriteControlSupported(JNIEnv *env, jobject thiz) {
+Java_com_maliopt_MaliOptNative_isSRGBWriteControlSupported(JNIEnv *env, jobject thiz) {
     return (jboolean)g_caps.SRGB_WRITE_CONTROL; }
 JNIEXPORT jboolean JNICALL
-Java_com_hybridcore_maliopt_MaliOptNative_isAnisotropicFilteringSupported(JNIEnv *env, jobject thiz) {
+Java_com_maliopt_MaliOptNative_isAnisotropicFilteringSupported(JNIEnv *env, jobject thiz) {
     return (jboolean)g_caps.ANISOTROPIC; }
 JNIEXPORT jboolean JNICALL
-Java_com_hybridcore_maliopt_MaliOptNative_isProgramBinarySupported(JNIEnv *env, jobject thiz) {
+Java_com_maliopt_MaliOptNative_isProgramBinarySupported(JNIEnv *env, jobject thiz) {
     return (jboolean)g_caps.PROGRAM_BINARY; }
 JNIEXPORT jboolean JNICALL
-Java_com_hybridcore_maliopt_MaliOptNative_isTextureStorageSupported(JNIEnv *env, jobject thiz) {
+Java_com_maliopt_MaliOptNative_isTextureStorageSupported(JNIEnv *env, jobject thiz) {
     return (jboolean)g_caps.TEXTURE_STORAGE; }
 JNIEXPORT jboolean JNICALL
-Java_com_hybridcore_maliopt_MaliOptNative_isTextureNPOTSupported(JNIEnv *env, jobject thiz) {
+Java_com_maliopt_MaliOptNative_isTextureNPOTSupported(JNIEnv *env, jobject thiz) {
     return (jboolean)g_caps.TEXTURE_NPOT; }
 JNIEXPORT jboolean JNICALL
-Java_com_hybridcore_maliopt_MaliOptNative_isMapBufferSupported(JNIEnv *env, jobject thiz) {
+Java_com_maliopt_MaliOptNative_isMapBufferSupported(JNIEnv *env, jobject thiz) {
     return (jboolean)g_caps.MAP_BUFFER; }
 JNIEXPORT jboolean JNICALL
-Java_com_hybridcore_maliopt_MaliOptNative_isBufferStorageSupported(JNIEnv *env, jobject thiz) {
+Java_com_maliopt_MaliOptNative_isBufferStorageSupported(JNIEnv *env, jobject thiz) {
     return (jboolean)g_caps.BUFFER_STORAGE; }
 JNIEXPORT jboolean JNICALL
-Java_com_hybridcore_maliopt_MaliOptNative_isTimerQuerySupported(JNIEnv *env, jobject thiz) {
+Java_com_maliopt_MaliOptNative_isTimerQuerySupported(JNIEnv *env, jobject thiz) {
     return (jboolean)g_caps.TIMER_QUERY; }
 JNIEXPORT jboolean JNICALL
-Java_com_hybridcore_maliopt_MaliOptNative_isDebugMarkerSupported(JNIEnv *env, jobject thiz) {
+Java_com_maliopt_MaliOptNative_isDebugMarkerSupported(JNIEnv *env, jobject thiz) {
     return (jboolean)g_caps.DEBUG_MARKER; }
 JNIEXPORT jboolean JNICALL
-Java_com_hybridcore_maliopt_MaliOptNative_isKHRDebugSupported(JNIEnv *env, jobject thiz) {
+Java_com_maliopt_MaliOptNative_isKHRDebugSupported(JNIEnv *env, jobject thiz) {
     return (jboolean)g_caps.KHR_DEBUG; }
 JNIEXPORT jboolean JNICALL
-Java_com_hybridcore_maliopt_MaliOptNative_isRobustnessSupported(JNIEnv *env, jobject thiz) {
+Java_com_maliopt_MaliOptNative_isRobustnessSupported(JNIEnv *env, jobject thiz) {
     return (jboolean)g_caps.ROBUSTNESS; }
 
 JNIEXPORT jint JNICALL
-Java_com_hybridcore_maliopt_MaliOptNative_getMaxTextureSize(JNIEnv *env, jobject thiz) {
+Java_com_maliopt_MaliOptNative_getMaxTextureSize(JNIEnv *env, jobject thiz) {
     return (jint)g_caps.MAX_TEXTURE_SIZE; }
 JNIEXPORT jint JNICALL
-Java_com_hybridcore_maliopt_MaliOptNative_getMaxSamples(JNIEnv *env, jobject thiz) {
+Java_com_maliopt_MaliOptNative_getMaxSamples(JNIEnv *env, jobject thiz) {
     return (jint)g_caps.MAX_SAMPLES; }
 JNIEXPORT jint JNICALL
-Java_com_hybridcore_maliopt_MaliOptNative_getMaxAnisotropy(JNIEnv *env, jobject thiz) {
+Java_com_maliopt_MaliOptNative_getMaxAnisotropy(JNIEnv *env, jobject thiz) {
     return (jint)g_caps.MAX_ANISOTROPY; }
 JNIEXPORT jint JNICALL
-Java_com_hybridcore_maliopt_MaliOptNative_getMaxVertexAttribs(JNIEnv *env, jobject thiz) {
+Java_com_maliopt_MaliOptNative_getMaxVertexAttribs(JNIEnv *env, jobject thiz) {
     return (jint)g_caps.MAX_VERTEX_ATTRIBS; }
 JNIEXPORT jint JNICALL
-Java_com_hybridcore_maliopt_MaliOptNative_getMaxCombinedTextureImageUnits(JNIEnv *env, jobject thiz) {
+Java_com_maliopt_MaliOptNative_getMaxCombinedTextureImageUnits(JNIEnv *env, jobject thiz) {
     return (jint)g_caps.MAX_COMBINED_TIU; }
 
 JNIEXPORT jstring JNICALL
-Java_com_hybridcore_maliopt_MaliOptNative_getActiveRenderContext(JNIEnv *env, jobject thiz) {
+Java_com_maliopt_MaliOptNative_getActiveRenderContext(JNIEnv *env, jobject thiz) {
     return (*env)->NewStringUTF(env, g_context); }
 JNIEXPORT jstring JNICALL
-Java_com_hybridcore_maliopt_MaliOptNative_getGPURenderer(JNIEnv *env, jobject thiz) {
+Java_com_maliopt_MaliOptNative_getGPURenderer(JNIEnv *env, jobject thiz) {
     return (*env)->NewStringUTF(env, g_caps.GPU_RENDERER); }
 JNIEXPORT jstring JNICALL
-Java_com_hybridcore_maliopt_MaliOptNative_getGPUVendor(JNIEnv *env, jobject thiz) {
+Java_com_maliopt_MaliOptNative_getGPUVendor(JNIEnv *env, jobject thiz) {
     return (*env)->NewStringUTF(env, g_caps.GPU_VENDOR); }
 JNIEXPORT jstring JNICALL
-Java_com_hybridcore_maliopt_MaliOptNative_getGLESVersion(JNIEnv *env, jobject thiz) {
+Java_com_maliopt_MaliOptNative_getGLESVersion(JNIEnv *env, jobject thiz) {
     return (*env)->NewStringUTF(env, g_caps.GLES_VERSION); }
