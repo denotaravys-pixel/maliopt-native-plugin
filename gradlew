@@ -1,12 +1,8 @@
 #!/bin/sh
-#
-# Copyright © 2015-2021 the original authors.
-# Licensed under the Apache License, Version 2.0
-#
 
 APP_NAME="Gradle"
 APP_BASE_NAME=${0##*/}
-DEFAULT_JVM_OPTS='"-Xmx64m" "-Xms64m"'
+
 MAX_FD=maximum
 
 warn () { echo "$*"; } >&2
@@ -17,10 +13,10 @@ msys=false
 darwin=false
 nonstop=false
 case "$( uname )" in
-  CYGWIN* )         cygwin=true  ;;
-  Darwin* )         darwin=true  ;;
-  MSYS* | MINGW* )  msys=true    ;;
-  NONSTOP* )        nonstop=true ;;
+  CYGWIN* )        cygwin=true  ;;
+  Darwin* )        darwin=true  ;;
+  MSYS* | MINGW* ) msys=true    ;;
+  NONSTOP* )       nonstop=true ;;
 esac
 
 app_path=$0
@@ -28,8 +24,8 @@ while [ -h "$app_path" ]; do
     ls=$( ls -ld "$app_path" )
     link=${ls#*' -> '}
     case $link in
-      /*)   app_path=$link ;;
-      *)    app_path=${app_path%"${app_path##*/}"}$link ;;
+      /*)  app_path=$link ;;
+      *)   app_path=${app_path%"${app_path##*/}"}$link ;;
     esac
 done
 APP_HOME=$( cd "${app_path%"${app_path##*/}"}." && pwd -P ) || exit
@@ -43,20 +39,20 @@ if [ -n "$JAVA_HOME" ]; then
         JAVACMD=$JAVA_HOME/bin/java
     fi
     if [ ! -x "$JAVACMD" ]; then
-        die "ERROR: JAVA_HOME is set to an invalid directory: $JAVA_HOME"
+        die "ERROR: JAVA_HOME invalido: $JAVA_HOME"
     fi
 else
     JAVACMD=java
-    which java >/dev/null 2>&1 || die "ERROR: JAVA_HOME is not set and no 'java' command could be found in your PATH."
+    which java >/dev/null 2>&1 || die "ERROR: java nao encontrado no PATH."
 fi
 
 if ! "$cygwin" && ! "$darwin" && ! "$nonstop"; then
     case $MAX_FD in
-      max*) MAX_FD=$( ulimit -H -n ) || warn "Could not query maximum file descriptor limit" ;;
+      max*) MAX_FD=$( ulimit -H -n ) || warn "Nao foi possivel consultar limite de file descriptors" ;;
     esac
     case $MAX_FD in
       '' | soft) ;;
-      *) ulimit -n "$MAX_FD" || warn "Could not set maximum file descriptor limit to $MAX_FD" ;;
+      *) ulimit -n "$MAX_FD" || warn "Nao foi possivel definir limite de file descriptors" ;;
     esac
 fi
 
@@ -64,17 +60,11 @@ if "$cygwin" || "$msys"; then
     APP_HOME=$( cygpath --path --mixed "$APP_HOME" )
     CLASSPATH=$( cygpath --path --mixed "$CLASSPATH" )
     JAVACMD=$( cygpath --unix "$JAVACMD" )
-    for arg do
-        if case $arg in -*)false;; /?*)t=${arg#/} t=/${t%%/*}; [ -e "$t" ];; *)false;; esac; then
-            arg=$( cygpath --path --mixed "$arg" )
-        fi
-        set -- "$@" "$arg"
-        shift
-    done
 fi
 
 exec "$JAVACMD" \
-    $DEFAULT_JVM_OPTS \
+    -Xmx64m \
+    -Xms64m \
     $JAVA_OPTS \
     $GRADLE_OPTS \
     -classpath "$CLASSPATH" \
